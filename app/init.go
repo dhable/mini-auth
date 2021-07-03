@@ -17,9 +17,9 @@ import (
 func (app *App) initializeRoutes() {
 	if app.Router == nil {
 		app.Router = mux.NewRouter()
-		app.Router.HandleFunc("/authenticate", app.authenticateUser).Methods("POST")
-		app.Router.HandleFunc("/profile", app.currentUserProfile).Methods("GET")
-		app.Router.HandleFunc("/jwks", app.jwtPublicKeySet).Methods("GET")
+		app.Router.HandleFunc("/authenticate", app.AuthenticateUser).Methods("POST")
+		app.Router.HandleFunc("/profile", app.CurrentUserProfile).Methods("GET")
+		app.Router.HandleFunc("/jwks", app.JwtPublicKeySet).Methods("GET")
 	} else {
 		fmt.Println("skipping init router")
 	}

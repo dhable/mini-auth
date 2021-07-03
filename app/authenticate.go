@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
@@ -17,12 +18,16 @@ func parseAuthRequest(r *http.Request) (*models.AuthRequest, error) {
 	if err := decoder.Decode(&authReq); err != nil {
 		log.Fatalf("failed to parse request body: %s", err)
 		return nil, err
-	} else {
-		return &authReq, nil
 	}
+
+	if authReq.Email == "" || authReq.Password == "" {
+		return nil, errors.New("missing required field")
+	}
+
+	return &authReq, nil
 }
 
-func (app *App) authenticateUser(rw http.ResponseWriter, r *http.Request) {
+func (app *App) AuthenticateUser(rw http.ResponseWriter, r *http.Request) {
 	authReq, err := parseAuthRequest(r)
 	if err != nil {
 		badRequest(rw, err)

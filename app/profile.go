@@ -7,7 +7,7 @@ import (
 	"github.com/dhable/mini-auth/models"
 )
 
-func (app *App) currentUserProfile(rw http.ResponseWriter, r *http.Request) {
+func (app *App) CurrentUserProfile(rw http.ResponseWriter, r *http.Request) {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader != "" {
 		jwt := strings.TrimPrefix(authHeader, "Bearer ")
