@@ -1,0 +1,6 @@
+INSERT INTO users(email, hashedpw, name, location) VALUES (
+    'dan@danhable.com',
+    X'243261243130244c2f2f684349757249346d7751497737796369484e755a6962595a5a4a496a736f664c5a64564150564b745574476f7658324e6379',
+    'Dan Hable',
+    'Chicago, IL'
+);

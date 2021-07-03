@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS users (
+    email VARCHAR(1024) NOT NULL PRIMARY KEY,
+	hashedpw BLOB NOT NULL,
+	name VARCHAR(1024),
+	location VARCHAR(1024)
+);
