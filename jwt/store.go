@@ -4,6 +4,8 @@ import (
 	"container/ring"
 	"crypto/rand"
 	"crypto/rsa"
+	"fmt"
+	"math"
 	"sync"
 	"time"
 )
@@ -13,6 +15,8 @@ type KeyStore struct {
 	keysLock *sync.RWMutex
 	issuer   string
 	tokenTTL time.Duration
+	keyTTL   *time.Duration
+	ticker   *time.Ticker
 }
 
 const (
@@ -20,6 +24,7 @@ const (
 )
 
 func generateNewKey(ks *KeyStore, bitSize int) error {
+	fmt.Println("generating a new key")
 	key, err := rsa.GenerateKey(rand.Reader, bitSize)
 	if err != nil {
 		return err
@@ -34,23 +39,53 @@ func generateNewKey(ks *KeyStore, bitSize int) error {
 	return nil
 }
 
-func SingleKeyWithBitSize(issuer string, tokenTTL time.Duration, keyBitSize int) (*KeyStore, error) {
-	ks := &KeyStore{
-		keys:     ring.New(1),
-		keysLock: &sync.RWMutex{},
-		issuer:   issuer,
-		tokenTTL: tokenTTL,
+func NewSingleKeyStore(issuer string, tokenTTL time.Duration) (*KeyStore, error) {
+	return NewKeyStore(issuer, tokenTTL, nil, DefaultKeyBitSize)
+}
+
+func NewKeyStore(issuer string, tokenTTL time.Duration, keyTTL *time.Duration, keyBitSize int) (*KeyStore, error) {
+	var ks *KeyStore
+	if keyTTL == nil {
+		// single key, no rotation
+		ks = &KeyStore{
+			keys:     ring.New(1),
+			keysLock: &sync.RWMutex{},
+			issuer:   issuer,
+			tokenTTL: tokenTTL,
+		}
+	} else {
+		var numKeys int
+		if tokenTTL.Milliseconds() < keyTTL.Milliseconds() {
+			numKeys = 2
+		} else {
+			numKeys = int(math.Ceil(float64(tokenTTL.Milliseconds()) / float64(keyTTL.Milliseconds())))
+		}
+
+		ks = &KeyStore{
+			keys:     ring.New(numKeys),
+			keysLock: &sync.RWMutex{},
+			issuer:   issuer,
+			tokenTTL: tokenTTL,
+			keyTTL:   keyTTL,
+			ticker:   time.NewTicker(*keyTTL),
+		}
 	}
 
 	if err := generateNewKey(ks, keyBitSize); err != nil {
 		return nil, err
 	}
 
-	return ks, nil
-}
+	if ks.keyTTL != nil {
+		go func() {
+			for range ks.ticker.C {
+				if err := generateNewKey(ks, keyBitSize); err != nil {
+					fmt.Printf("failed to generate a new key: %s", err)
+				}
+			}
+		}()
+	}
 
-func SingleKey(issuer string, tokenTTL time.Duration) (*KeyStore, error) {
-	return SingleKeyWithBitSize(issuer, tokenTTL, DefaultKeyBitSize)
+	return ks, nil
 }
 
 func (ks *KeyStore) currentKey() *rsa.PrivateKey {

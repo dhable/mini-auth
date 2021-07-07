@@ -52,7 +52,10 @@ func (app *App) initializeDatabase() error {
 }
 
 func (app *App) initializeKeyStore() error {
-	ks, err := jwt.SingleKey("mini-auth", time.Hour)
+	keyTTL := 4 * time.Hour
+	tokenTTL := 1 * time.Hour
+
+	ks, err := jwt.NewKeyStore("mini-auth", tokenTTL, &keyTTL, 2048)
 	if err != nil {
 		return err
 	}
