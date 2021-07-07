@@ -75,7 +75,7 @@ func NewKeyStore(issuer string, tokenTTL time.Duration, keyTTL *time.Duration, k
 		return nil, err
 	}
 
-	if ks.keyTTL != nil {
+	if ks.ticker != nil {
 		go func() {
 			for range ks.ticker.C {
 				if err := generateNewKey(ks, keyBitSize); err != nil {
